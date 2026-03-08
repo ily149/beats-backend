@@ -1,24 +1,24 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\BeatFileController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BeatController;
+use App\Http\Controllers\BeatAssetController;
 
-Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
-    return $request->user();
-});
-
-// временно без auth, чтобы легче протестить
-Route::post('/beats/{beat}/upload', [BeatFileController::class, 'upload']);
-Route::get('/beats/{beat}/download', [BeatFileController::class, 'download']);
-
-
-
+// Public
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
+// Protected
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // Beats
+    Route::get('/beats', [BeatController::class, 'index']);
+    Route::post('/beats', [BeatController::class, 'store']);
+    Route::get('/beats/{beat}', [BeatController::class, 'show']);
+
+    // Beat assets
+    Route::post('/beats/{beat}/assets/upload', [BeatAssetController::class, 'upload']);
 });
