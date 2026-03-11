@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Beat;
 use App\Models\BeatLicense;
+use Aws\Token\BearerTokenAuthorization;
 use Illuminate\Http\Request;
 
 class BeatController extends Controller
@@ -75,5 +76,15 @@ class BeatController extends Controller
         if ($beat->user_id !== $request->user()->id) {
             abort(403, 'Forbidden');
         }
+    }
+
+    public function latest()
+    {
+        $beats = Beat::query()
+            ->with(['genre', 'user'])
+            ->latest()
+            ->take(12)
+            ->get();
+        return response()->json($beats);
     }
 }
