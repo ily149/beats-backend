@@ -14,6 +14,10 @@ class User extends Authenticatable implements MustVerifyEmail
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
+    public const ROLE_USER = 0;
+    public const ROLE_PRODUCER = 1;
+    public const ROLE_MODERATOR = 2;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -23,6 +27,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -34,6 +39,21 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'remember_token',
     ];
+    
+    public function isUser(): bool
+    {
+        return $this->role === self::ROLE_USER;
+    }
+
+    public function isProducer(): bool
+    {
+        return $this->role === self::ROLE_PRODUCER;
+    }
+
+    public function isModerator(): bool
+    {
+        return $this->role === self::ROLE_MODERATOR;
+    }
 
     /**
      * Get the attributes that should be cast.
