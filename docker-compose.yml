@@ -41,19 +41,5 @@ services:
     ports:
       - "8025:8025"
 
-  minio:
-    image: minio/minio
-    container_name: beats_minio
-    environment:
-      MINIO_ROOT_USER: minio
-      MINIO_ROOT_PASSWORD: minio12345
-    command: server /data --console-address ":9001"
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - beats_minio:/data
-
 volumes:
   beats_db:
-  beats_minio:
