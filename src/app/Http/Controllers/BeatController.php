@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Beat;
 use App\Models\BeatLicense;
-use Aws\Token\BearerTokenAuthorization;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class BeatController extends Controller
 {
@@ -81,10 +81,12 @@ class BeatController extends Controller
     public function latest()
     {
         $beats = Beat::query()
-            ->with(['genre', 'user'])
+            ->whereDate('created_at', Carbon::today())
+            ->with(['genre', 'user', 'licenses'])
             ->latest()
             ->take(12)
             ->get();
+
         return response()->json($beats);
     }
 }
