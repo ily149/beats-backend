@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Beat;
 use App\Models\BeatLicense;
-use Aws\Token\BearerTokenAuthorization;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class BeatController extends Controller
 {
@@ -13,7 +14,7 @@ class BeatController extends Controller
     {
         return Beat::query()
             ->where('user_id', $request->user()->id)
-            ->with(['licenses.assets'])
+            ->with(['genre', 'user', 'licenses.assets'])
             ->latest()
             ->get();
     }
@@ -68,7 +69,39 @@ class BeatController extends Controller
             ],
         ]);
 
+        // Promote user to producer on first beat upload
+        $user = $request->user();
+        if ($user->role === User::ROLE_USER) {
+            $user->role = User::ROLE_PRODUCER;
+            $user->save();
+        }
+
         return response()->json($beat->load(['licenses.assets']), 201);
+    }
+
+    public function destroy(Request $request, Beat $beat)
+    {
+        $this->assertOwner($request, $beat);
+
+        // Delete assets from S3
+        foreach ($beat->licenses as $license) {
+            foreach ($license->assets as $asset) {
+                Storage::disk($asset->disk)->delete($asset->path);
+                $asset->delete();
+            }
+            $license->delete();
+        }
+
+        $beat->delete();
+
+        // Demote to user if no beats left
+        $user = $request->user();
+        if ($user->role === User::ROLE_PRODUCER && Beat::where('user_id', $user->id)->count() === 0) {
+            $user->role = User::ROLE_USER;
+            $user->save();
+        }
+
+        return response()->json(['message' => 'Beat deleted']);
     }
 
     private function assertOwner(Request $request, Beat $beat): void
@@ -81,7 +114,7 @@ class BeatController extends Controller
     public function latest()
     {
         $beats = Beat::query()
-            ->with(['genre', 'user'])
+            ->with(['genre', 'user', 'licenses.assets'])
             ->latest()
             ->take(12)
             ->get();
